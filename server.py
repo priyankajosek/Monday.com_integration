@@ -9,7 +9,7 @@ import calendar
 import time
 
 # Monday.com API key authentication
-apiKey = "Your Monday.com API key"
+apiKey = "Your monday.com API key here"
 apiUrl = "https://api.monday.com/v2"
 headers = {"Authorization" : apiKey}
 
@@ -26,6 +26,8 @@ if not app.debug:
 
 # Function to retrieve item_id using order_id
 def get_item_id(order_id):
+
+    order_id = str(order_id)
     query = """ query($value: String!) {
                         items_by_column_values(
                             board_id: 1899225171,
@@ -47,6 +49,7 @@ def get_item_id(order_id):
     try:
         r = requests.post(url=apiUrl, json=data, headers=headers)
         response = r.json()
+        print(response)
         item_id = response['data']['items_by_column_values'][0]['id']
         
     except Exception as e:
@@ -149,15 +152,15 @@ def create_order():
 
 
 # Route for modifying an existing order
-@app.route("/modify", methods=['POST'])
-def modify():
+@app.route("/modify/<int:order_id>", methods=['PUT'])
+def modify(order_id):
 
-    if request.method == 'POST':
+    if request.method == 'PUT':
         color = request.form['color']
         size = request.form['size']
         message = request.form['message']
         quantity = request.form['quantity']
-        order_id = request.form['order_id']
+        
        
         #  Today's date in JSON format
         today = datetime.now().date()
@@ -169,7 +172,7 @@ def modify():
         # Returns error page if order ID does not exist
         if item_id == -1:
             return render_template("error_handling.html")
-        print(item_id)
+        
 
         #  Checks if the order has already been processed. Returns regret message, if so.
         status = order_status(item_id)
@@ -177,7 +180,7 @@ def modify():
             return({
                 'message':"Sorry! Order processed already! Cannot be modified now."
             })  
-        print(status)
+        
         # Query for Modifying the order details in 'monday.com' 
         query = """mutation ($item_id: Int!, $columnVals: JSON!)
                      { 
@@ -198,7 +201,7 @@ def modify():
             'text7': message,
             'dropdown': {'labels' : [size]},
             'numbers': quantity,
-            'text3': order_id
+            'text3': str(order_id)
             })
             }
         
@@ -211,20 +214,19 @@ def modify():
 
 
 # Route for deleting a particular order
-@app.route("/delete", methods=['POST'])
-def delete():
+@app.route("/delete/<int:order_id>", methods=['DELETE'])
+def delete(order_id):
 
-    if request.method == 'POST':
+    if request.method == 'DELETE':
         
-        order_id = request.form['order_id']
-
+        
         # Calling function to retrieve item_id
         item_id = get_item_id(order_id)
         
         # Returns error page if order ID does not exist
         if item_id == -1:
             return render_template("error_handling.html")
-        print(item_id)      
+              
 
         #  Checks if the order has already been processed. Returns regret message, if so.
         status = order_status(item_id)
@@ -257,34 +259,32 @@ def delete():
         
 
 # Route for displaying order status 
-@app.route("/order_details", methods=['GET','POST'])
-def order_details():
-
-    if request.method == 'POST':
-        
-        order_id = request.form['order_id']
+@app.route("/order_details/<int:order_id>", methods=['GET'])
+def order_details(order_id):
        
-        # Calling function to retrieve item_id
-        item_id = get_item_id(order_id)
-        
-        # Returns error page if order ID does not exist
-        if item_id == -1:
-            return render_template("error_handling.html")
-        print(item_id)
+    # order_id = request.form['order_id']
+       
+    # Calling function to retrieve item_id
+    item_id = get_item_id(order_id)
+    
+    # Returns error page if order ID does not exist
+    if item_id == -1:
+        return render_template("error_handling.html")
+    
        
 
-        # Calls the function that returns the status    
-        status = order_status(item_id)
+    # Calls the function that returns the status    
+    status = order_status(item_id)
         
-        # Displays the message as per status received
-        progress ={
+    # Displays the message as per status received
+    progress ={
             '0': "Working on it",
             '1': "Done",
             '2': "Stuck"
         }
 
-        # Status passed to the browser
-        return progress[status]
+    # Status passed to the browser
+    return progress[status]
         
 
 if __name__=="__main__":
