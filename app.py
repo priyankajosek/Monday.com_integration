@@ -277,11 +277,7 @@ def order_details(order_id):
     # Status passed to the browser
     return progress[status]
         
-# Route for deleting a particular order
-# @app.route("/order/<int:order_id>", methods=['DELETE'])
-# def delete(order_id):
-
-    
+   
 
 if __name__=="__main__":
     app.run(debug=True)
