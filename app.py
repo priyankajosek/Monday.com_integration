@@ -21,7 +21,7 @@ if not app.debug:
 
     app.logger.addHandler(file_handler)
 
-
+# HELPER FUNCTIONS
 # Function to retrieve item_id using order_id
 def get_item_id(order_id):
 
@@ -97,13 +97,12 @@ def display_home():
     return "Welcome"
 
 
-# For creating new order
+# For retrieving all orders and posting new order
 @app.route("/order", methods=['GET','POST'])
 def order():
 
-
     if request.method == 'GET':
-        # Graphql query for creating new item with column values populated
+        # Graphql query for retriving all item names and IDs
         query = """query {
                             boards (ids: 1899225171) {
                                     items {
@@ -115,8 +114,8 @@ def order():
         data ={'query':query}
         r = requests.post(url=apiUrl, json=data, headers=headers)
         
-        # Details of the created item returned to the browser
         return r.json()
+
 
     if request.method == 'POST':
         color = request.form['color']
