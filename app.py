@@ -7,7 +7,7 @@ import calendar
 import time
 
 # Monday.com API key authentication
-apiKey = ""
+apiKey = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjEzMjc3NzI5MCwidWlkIjoyNTkwNTg1NiwiaWFkIjoiMjAyMS0xMS0xMlQwNjoxODozMi4yMTFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTA0MDQ2OTUsInJnbiI6InVzZTEifQ.pYPjorCEtYiz77Yvffzpa-Q8HSpA_hhDRfFz5mtp36Y"
 apiUrl = "https://api.monday.com/v2"
 headers = {"Authorization" : apiKey}
 
@@ -98,8 +98,25 @@ def display_home():
 
 
 # For creating new order
-@app.route("/order", methods=['POST'])
+@app.route("/order", methods=['GET','POST'])
 def order():
+
+
+    if request.method == 'GET':
+        # Graphql query for creating new item with column values populated
+        query = """query {
+                            boards (ids: 1899225171) {
+                                    items {
+                                            id
+                                            name
+                        }
+                        }
+                        }"""
+        data ={'query':query}
+        r = requests.post(url=apiUrl, json=data, headers=headers)
+        
+        # Details of the created item returned to the browser
+        return r.json()
 
     if request.method == 'POST':
         color = request.form['color']
