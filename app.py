@@ -108,6 +108,11 @@ def order():
                                     items {
                                             id
                                             name
+                                            column_values {
+                                                            id
+                                                            title
+                                                            value
+      }
                         }
                         }
                         }"""
@@ -160,9 +165,16 @@ def order():
         # Calling Monday.com API
         data ={'query':query, 'variables' : vars}
         r = requests.post(url=apiUrl, json=data, headers=headers)
-        
+        response = r.json()
+
         # Details of the created item returned to the browser
-        return r.json()
+        if response['status_code'] == 200:
+            return response
+            
+        else:
+            return Response("{'error':'Something went wrong. Please try again later'}",
+                             status=response['status_code'], mimetype='application/json')
+        
         
 
 
@@ -184,12 +196,12 @@ def modify(order_id):
         # Calls function to obtain item_id
         item_id = get_item_id(order_id) 
 
-        # Returns error page if order ID does not exist
+        # If order ID does not exist
         if item_id == -1:
             return Response("{'error':'Order does not exist'}", status=404, mimetype='application/json')
         
 
-        #  Checks if the order has already been processed. Returns regret message, if so.
+        #  If Order has already been processed
         status = order_status(item_id)
         if status == "1":
             return Response("{'message':'Sorry! Order processed already! Cannot be modified now.'}", status=422, mimetype='application/json')
@@ -223,21 +235,29 @@ def modify(order_id):
         data ={'query':query, 'variables' : vars}
         r = requests.post(url=apiUrl, json=data, headers=headers)
 
-        # Details of the modified item passed to the browser
-        return r.json()
+        response = r.json()
+
+        # Details of the updated item returned to the browser
+        if response['status_code'] == 200 or response['status_code'] == 204:
+            return response
+            
+        else:
+            return Response("{'error':'Something went wrong. Please try again later'}",
+                             status=response['status_code'], mimetype='application/json')
+        
+
 
     if request.method == 'DELETE':
         
-        
-        # Calling function to retrieve item_id
+         # Calling function to retrieve item_id
         item_id = get_item_id(order_id)
         
-        # Returns error page if order ID does not exist
+        # If order ID does not exist
         if item_id == -1:
             return Response("{'error':'Order does not exist'}", status=404, mimetype='application/json')
         
 
-        #  Checks if the order has already been processed. Returns regret message, if so.
+        #  If the order has already been processed
         status = order_status(item_id)
         if status == "1":
             return Response("{'message':'Sorry! Order processed already! Cannot be modified now.'}", status=422, mimetype='application/json')
@@ -262,8 +282,15 @@ def modify(order_id):
         data ={'query':query,'variables' : vars}
         r = requests.post(url=apiUrl, json=data, headers=headers)
         
-        # Details of the deleted item passed to the browser
-        return r.json()
+        response = r.json()
+
+        # Details of the deleted item returned to the browser
+        if response['status_code'] == 200 or response['status_code'] == 204:
+            return response
+            
+        else:
+            return Response("{'error':'Something went wrong. Please try again later'}",
+                             status=response['status_code'], mimetype='application/json')
         
 
 # Route for displaying order status 
@@ -274,25 +301,30 @@ def order_details(order_id):
     # Calling function to retrieve item_id
     item_id = get_item_id(order_id)
     
-    # Returns error page if order ID does not exist
+    # If order ID does not exist
     if item_id == -1:
         return Response("{'error':'Order does not exist'}", status=404, mimetype='application/json')
     
        
-
+    
     # Calls the function that returns the status    
     status = order_status(item_id)
-        
-    # Displays the message as per status received
-    progress ={
-            '0': "Working on it",
-            '1': "Done",
-            '2': "Stuck"
-        }
+    if status in ['0','1','2']: 
 
-    # Status passed to the browser
-    return progress[status]
-        
+        # Displays the message as per status received
+        progress ={
+                    '0': "Working on it",
+                    '1': "Done",
+                    '2': "Stuck"
+                }
+
+        # Status passed to the browser
+        return progress[status]
+
+    else:
+        return Response("{'error':'Sorry! Something went wrong. Please try again later'}", 
+                status=500, mimetype='application/json')
+    
    
 
 if __name__=="__main__":
