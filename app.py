@@ -118,8 +118,15 @@ def order():
                         }"""
         data ={'query':query}
         r = requests.post(url=apiUrl, json=data, headers=headers)
-        
-        return r.json()
+        response = r.json()
+
+        # Error handling
+        if 'errors' in response:
+            return Response("{'error':'Something went wrong. Please try again later'}",
+                             status=500, mimetype='application/json')
+        else:
+            return response
+
 
 
     if request.method == 'POST':
